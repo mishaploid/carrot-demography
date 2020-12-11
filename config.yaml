@@ -1,0 +1,24 @@
+################################################################################
+## Carrot demography - Configuration file
+## This is a handy way to set file paths and variables (e.g. mutation rate) so
+## that they are easily adjusted
+################################################################################
+
+# file path for population and sample ids
+# Two column tab-delimited file
+# Column names: Population, Sample_ID
+samp_ids: data/sample_ids.txt
+
+# VCF file & index
+# can create index by using tabix -p vcf yourfile.vcf.gz
+vcf: data/kevinG.d3.vcf.gz
+vcf_index: data/kevinG.d3.vcf.gz.tbi
+
+# mask file to exclude poorly mapped regions (BED format)
+# should be a text file with a column for CHR, start, & stop positions
+# this result is from RepeatMasker but could also use SNPable
+mask: data/masked_regions.bed.gz
+
+# estimate of per bp per generation mutation rate for SMC++
+# taken from lettuce (Asterid) - Zhang et al. doi:10.1038/s41467-017-02445-9
+mu: 4e-8

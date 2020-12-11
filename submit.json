@@ -1,0 +1,34 @@
+{
+    "__default__" :
+    {
+      "p" : "med2",
+      "time" : "14-00:00",
+      "name" : "{rule}.{wildcards}",
+      "o" : "slurm_out/{rule}_{wildcards}.%j.out"
+    },
+    "vcf2smc" :
+    {
+      "mem" : "45G",
+      "p" : "med2"
+    },
+    "smc_cv" :
+    {
+      "mem" : "128G",
+      "p" : "med2"
+    },
+    "plot_estimate" :
+    {
+      "mem" : "1G",
+      "p" : "med2"
+    },
+    "joint_vcf2smc" :
+    {
+      "mem" : "30G",
+      "p" : "med2"
+    },
+    "split" :
+    {
+      "mem" : "128G",
+      "p" : "bigmemm"
+    }
+}
