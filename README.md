@@ -17,17 +17,15 @@ Data is not uploaded to git, but includes the following files:
 * `DCARv3.4.all.out.gff.gz` - results from RepeatMasker to mask regions that are highly repetitive/ambiguously mapped  
 * `masked_regions.bed.gz` - results from RepeatMasker reformatted into BED format (tab-delimited, chromosome, start position, stop position) using the code below.
 
-### Snakefile
-This is the workhorse file for Snakemake and tracks the expected output files in addition to including some python code to format input variables.
+### Key files
 
-### rules/  
-Folder containing rules files (`.smk`) that are called by snakemake. For this project, `rules/run_smc.smk` contains the code necessary to run SMC++ to estimate effective population size.  
+1. `Snakefile` - This is the workhorse file for Snakemake and tracks the expected output files in addition to including some python code to format input variables.
 
-### config.yaml
-This file can be edited to adjust file paths for input files and parameters to run SMC++
+1. `rules/` - Folder containing rules files (`.smk`) that are called by snakemake. For this project, `rules/run_smc.smk` contains the code necessary to run SMC++ to estimate effective population size.  
 
-### submit.json
-Specifies cluster configuration, log files, and CPU/mem usage for each rule - needs to be adjusted depending on HPC environment. 
+1. `config.yaml` - This file can be edited to adjust file paths for input files and parameters to run SMC++
+
+1. `submit.json` - Specifies cluster configuration, log files, and CPU/mem usage for each rule - needs to be adjusted depending on HPC environment.
 
 ## Setup
 
