@@ -1,5 +1,13 @@
 # Demographic history with SMC++
 # adapted from lovely script by cattlefriends Harly Durbin & Troy Rowan
+# Check out SMC++ git repo for additional documentation:
+#   https://github.com/popgenmethods/smcpp
+
+################################################################################
+# STEP 1
+# Create input files for SMC++ (.smc.gz format)
+#   --mask = poorly mapped regions to exclude from analysis (otherwise assumes missing data = regions of homozygosity)
+################################################################################
 
 rule vcf2smc:
     input:
@@ -20,8 +28,12 @@ rule vcf2smc:
         "smc++ vcf2smc \
         --mask {input.mask} {input.vcf} {output} {params.chrom} {params.list}"
 
+################################################################################
+# STEP 2
+# Fit population size history to data
+#   cv method uses cross-validation to obtain model parameters
+################################################################################
 
-### START HERE
 rule smc_cv:
     input:
     	smc_chr = expand("models/smc/input/{{population}}.{chr}.smc.gz", chr = CHR)
@@ -40,17 +52,24 @@ rule smc_cv:
         --cores {threads} \
         --spline cubic \
     	-o {params.model_out_dir} {params.mu} {params.model_in}"
-#         #         --timepoints 1e3 1e6 \
+
+################################################################################
+# STEP 3
+# Plot results for population size history estimates
+#   --csv exports a csv formatted file with results
+#   -g specifies the number of years per generation
+################################################################################
 
 smc_plot:
     input:
-        smc_out = expand("models/smc/{population}/model.final.json", population = popdict.keys()) 
+        smc_out = expand("models/smc/{population}/model.final.json", population = popdict.keys())
     output:
-        "reports/smc/{population}_smc_cv.png"
+        "reports/smc/smc_cv_results.png"
     params:
         gen = 2
     shell:
-        "smc++ plot --c \
+        "smc++ plot \
+        --csv \
         -g {params.gen} \
         {output} \
         {input.smc_out}"

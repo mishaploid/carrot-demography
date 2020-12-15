@@ -30,12 +30,10 @@ samp_list = samp_ids.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist
 
 # convert sample list to a python dictionary object
 popdict = samp_list.to_dict()
-
 print(popdict)
 
-from collections import defaultdict
-
 # join sample names and separate them with a ','
+from collections import defaultdict
 for key in popdict.keys():
     popdict[key] = ','.join(popdict[key])
 
@@ -58,7 +56,7 @@ rule all:
 	input:
 		vcf2smc = expand("models/smc/input/{population}.{chr}.smc.gz", population = popdict.keys(), chr = CHR),
 		smc_cv = expand("models/smc/{population}/fold{fold}/model.final.json", population = popdict.keys(), fold = ['0','1']),
-		# estimate = expand("models/smc/estimate/{pop}/model.final.json", pop = pops),
+		smc_plot = "reports/smc/smc_cv_results.png"
 
 ################################################################################
 ## Rule files to include
