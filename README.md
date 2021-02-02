@@ -86,3 +86,10 @@ In the terminal, index the mask file:
 bgzip data/masked_regions.bed
 tabix -p bed data/masked_regions.bed.gz
 ```
+
+3. **Quick fix for SMC++ vcf2smc error**
+Ran into a traceback error for Chr1 of the Eastern Cultivated population. This was fixed by following the advice documented (here)[https://github.com/popgenmethods/smcpp/issues/167]. Recoded missing data using the following command, and manually ran `smcpp vcf2smc` for chr1 of the Eastern Cultivated population:
+
+```
+plink --allow-extra-chr --chr DCARv3_Chr1 --keep-allele-order --out data/DCARv3_Chr1_recode --recode vcf-iid --vcf data/kevinG.d3.vcf.gz
+```

@@ -60,7 +60,7 @@ rule smc_cv:
 #   -g specifies the number of years per generation
 ################################################################################
 
-smc_plot:
+rule smc_plot:
     input:
         smc_out = expand("models/smc/{population}/model.final.json", population = popdict.keys())
     output:
