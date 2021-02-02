@@ -58,7 +58,6 @@ samp_ids = samp_ids.replace(' ', '_', regex = True)
 
 # export formatted population and sample ids
 samp_ids.to_csv('data/sample_ids.txt', header = True, index = False, sep = '\t')
-
 ```
 
 2. **Reformat RepeatMasker results as a BED mask file**  
@@ -87,7 +86,7 @@ bgzip data/masked_regions.bed
 tabix -p bed data/masked_regions.bed.gz
 ```
 
-3. **Quick fix for SMC++ vcf2smc error**
+3. **Quick fix for SMC++ vcf2smc error**  
 Ran into a traceback error for Chr1 of the Eastern Cultivated population. This was fixed by following the advice documented [here](https://github.com/popgenmethods/smcpp/issues/167). Recoded missing data using the following command, and manually ran `smcpp vcf2smc` for chr1 of the Eastern Cultivated population:
 
 ```

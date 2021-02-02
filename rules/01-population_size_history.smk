@@ -60,11 +60,11 @@ rule smc_cv:
 #   -g specifies the number of years per generation
 ################################################################################
 
-rule smc_plot:
+rule plot_estimate:
     input:
         smc_out = expand("models/smc/{population}/model.final.json", population = popdict.keys())
     output:
-        "reports/smc/smc_cv_results.png"
+        "reports/smc_cv_results.png"
     params:
         gen = 2
     shell:
@@ -73,47 +73,3 @@ rule smc_plot:
         -g {params.gen} \
         {output} \
         {input.smc_out}"
-
-# # #Generate vcf2smc files containing the joint frequency spectrum for both populations
-# rule joint_vcf2smc:
-#     input:
-#         vcf = "data/processed/filtered_snps/{chr}.filtered.snps.vcf.gz",
-#         index = "data/processed/filtered_snps/{chr}.filtered.snps.vcf.gz.tbi"
-#     output:
-#         pop_pair_out = "models/smc/split/{pop_pair}.{chr}.smc.gz"
-#     threads: 12
-#     params:
-#     	chrom = "{chr}",
-#         mask = "data/processed/mappability_masks/scratch/{chr}.mask.bed.gz",
-#     	pop_pair_string = pair_string_choose
-#     shell:
-#     	"smc++ vcf2smc \
-#         --cores {threads} \
-#         -m {params.mask} \
-#         {input.vcf} \
-#         {output.pop_pair_out} {params.chrom} {params.pop_pair_string}"
-#
-# rule split:
-#     input:
-#         expand("models/smc/split/{pop_pair}.{chr}.smc.gz", pop_pair = ['botrytis_italica', 'italica_botrytis'], chr = chr),
-#         expand("models/smc/input/{pop}.{chr}.smc.gz", pop = pops, chr = chr)
-#     threads: 16
-#     params:
-#         model_out_dir = "models/smc/split/test",
-#         marginal_models = model_chooser
-#     output:
-#         model_out = "models/smc/split/model.final.json"
-#     shell:
-#         "smc++ split \
-#         -o {params.model_out_dir} \
-#         --cores {threads} \
-#         {params.marginal_models} \
-#         {input}"
-
-# # rule plot_split:
-# #     input:
-# #         model = "models/split/{rundate}.{dataset}/{pop_pair}/model.final.json"
-# #     output:
-# #         plot = "reports/figures/{rundate}.{dataset}.{pop_pair}.split.png"
-# #     shell:
-# #         "smc++ plot -c -g 2 {output.plot} {input.model}"
