@@ -18,6 +18,28 @@ configfile: "config.yaml"
 CHR = ['DCARv3_Chr' + str(n) for n in range(1,10)]
 
 ################################################################################
+## Distinguished individuals to use for SMC++ input files
+## These are 10 randomly sampled individuals from each population
+## Can be used to estimate a composite likelihood and uncertainty in the recent past
+################################################################################
+dist_ind = pd.read_table(config['distinguished_inds'])
+
+dist_list = dist_ind.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist())
+
+dist_dict = dist_list.to_dict()
+
+# create a list of filenames for smc++ input files using different distinguished individuals
+smc_input_files = [expand('models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz',
+                    population = key, distinguished_ind = value, chr = CHR)
+                    for key, value in dist_dict.items()]
+
+# create a list of filenames to feed into smc++ cv command
+# want to include all .smc.gz files for each population (includes all chromosomes and distinguished individuals)
+def smc_cv_input(wildcards):
+    files = expand('models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz', chr=CHR, population=wildcards.population, distinguished_ind=dist_dict[wildcards.population])
+    return files
+
+################################################################################
 ## Create a dictionary of sample names and population ids for SMC++ estimate
 ## https://stackoverflow.com/questions/35029731/convert-two-columns-pandas-data-frame-to-dictionary-of-list-with-first-column-as
 ################################################################################
@@ -30,7 +52,6 @@ samp_list = samp_ids.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist
 
 # convert sample list to a python dictionary object
 popdict = samp_list.to_dict()
-print(popdict)
 
 # join sample names and separate them with a ','
 from collections import defaultdict
@@ -42,9 +63,9 @@ for key in popdict.keys():
 for key, value in popdict.items() :
     popdict[key] = key + ':' + value
 
-# function to print formatted list of population: sample ids using wildcards (WC)
-def pop_choose(WC):
-	list = popdict[WC.population]
+# function to print formatted list of population: sample ids using wildcards
+def pop_choose(wildcards):
+	list = popdict[wildcards.population]
 	return list
 
 ################################################################################
@@ -52,38 +73,53 @@ def pop_choose(WC):
 ################################################################################
 
 # # dictionary of population pairs to estimate divergence
-pop_pair_dict = {'Wild_CentralAsianCultivated':['Wild', 'Central_Asian_Cultivated']}
-# pop_pair_dict = {'botrytis_italica':['botrytis', 'italica'],
-# 'italica_botrytis':['italica', 'botrytis'],
-# 'italica_wild':['italica', 'wild'],
-# 'wild_italica':['wild', 'italica']}
+pop_pair_dict = {'Wild_CentralAsianCultivated':['Wild', 'Central_Asian_Cultivated'],
+'Wild_EasternCultivated':['Wild', 'Eastern_Cultivated'],
+'Wild_WesternCultivated':['Wild', 'Western_Cultivated'],
+'Wild_Cultivar':['Wild', 'Cultivar'],
+'CentralAsian_Eastern':['Central_Asian_Cultivated', 'Eastern_Cultivated'],
+'CentralAsian_Western':['Central_Asian_Cultivated', 'Western_Cultivated'],
+'CentralAsian_Cultivar':['Central_Asian_Cultivated', 'Cultivar'],
+'Eastern_Western':['Eastern_Cultivated', 'Western_Cultivated'],
+'Eastern_Cultivar':['Eastern_Cultivated', 'Cultivar'],
+'Western_Cultivar':['Western_Cultivated', 'Cultivar']}
 
-def pop_pair_choose(WC):
-	list = popdict[WC.pop_pair]
-	return list
+# 'Wild_Cultivar':['Wild', 'Cultivar'],
 
-# # for split time:
-# # based on current wildcard, find pop pair in pop_pair_dict
-# # for each population in current pop pair, find pop in popdict
-# # combine strings to create a super long string
-# # return the super long string
-#
-def pair_string_choose(WC):
-	pops = pop_pair_dict[WC.pop_pair]
-	pop1 = popdict[pops[0]]
-	pop2 = popdict[pops[1]]
-	pop_pair_string = pop1 + " " + pop2
-	return pop_pair_string
-#
+
+# def pop_pair_choose(wildcards):
+# 	list = popdict[wildcards.pop_pair]
+# 	return list
+
+# for split time:
+# based on current wildcard, find pop pair in pop_pair_dict
+# for each population in current pop pair, find pop in popdict
+# combine strings to create a super long string
+# return the super long string
+
+def pair_string_choose12(wildcards):
+    pops = pop_pair_dict[wildcards.pop_pair]
+    pop1 = popdict[pops[0]]
+    pop2 = popdict[pops[1]]
+    pop_pair_string12 = pop1 + " " + pop2
+    return pop_pair_string12
+
+def pair_string_choose21(wildcards):
+    pops = pop_pair_dict[wildcards.pop_pair]
+    pop1 = popdict[pops[0]]
+    pop2 = popdict[pops[1]]
+    pop_pair_string21 = pop2 + " " + pop1
+    return pop_pair_string21
+
 # # create string: location of model.final.json for each pop
-#
-# def model_chooser(WC):
-# 	pops = pop_pair_dict[WC.pop_pair]
-# 	pop1 = pops[0]
-# 	pop2 = pops[1]
-# 	model_string = "models/smc/cv_1e3_1e6/" + pop1 + "/model.final.json " \
-# 	+ "models/smc/cv_1e3_1e6/" + pop2 + "/model.final.json"
-# 	return model_string
+
+def smc_split_input(wildcards):
+    pops = pop_pair_dict[wildcards.pop_pair]
+    models = expand("models/smc_cv/{population}/model.final.json", population = pops)
+    pop1_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", chr=CHR, population=pops[0], distinguished_ind=dist_dict[pops[0]])
+    pop2_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", chr=CHR, population=pops[1], distinguished_ind=dist_dict[pops[1]])
+    joint_input = expand("models/smc_split/input/{pop_pair}{order}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, order = [12, 21], chr = CHR)
+    return models + pop1_input + pop2_input + joint_input
 
 
 ################################################################################
@@ -93,10 +129,12 @@ def pair_string_choose(WC):
 
 rule all:
 	input:
-		vcf2smc = expand("models/smc/input/{population}.{chr}.smc.gz", population = popdict.keys(), chr = CHR),
-		smc_cv = expand("models/smc/{population}/fold{fold}/model.final.json", population = popdict.keys(), fold = ['0','1']),
+		vcf2smc = smc_input_files,
+		smc_cv = expand("models/smc_cv/{population}/model.final.json", population = popdict.keys()),
 		plot_estimate = "reports/smc_cv_results.png",
-        joint_vcf2smc = expand("models/smc/split_input/{pop_pair}.{chr}.smc.gz", pop_pair = pop_pair_dict.keys(), chr = CHR)
+        joint_vcf2smc = expand("models/smc_split/input/{pop_pair}{order}.{chr}.smc.gz", pop_pair = pop_pair_dict.keys(), order = [12, 21], chr = CHR),
+        smc_split = expand("models/smc_split/{pop_pair}/model.final.json", pop_pair = pop_pair_dict.keys()),
+        plot_split = expand("reports/figures/{pop_pair}.split.png", pop_pair = pop_pair_dict.keys())
 
 ################################################################################
 ## Rule files to include

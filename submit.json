@@ -26,9 +26,14 @@
       "mem" : "30G",
       "p" : "med2"
     },
-    "split" :
+    "smc_split" :
     {
-      "mem" : "128G",
+      "mem" : "240G",
       "p" : "bigmemm"
+    },
+    "plot_split" :
+    {
+      "mem" : "1G",
+      "p" : "med2"
     }
 }

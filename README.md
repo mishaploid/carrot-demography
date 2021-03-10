@@ -60,7 +60,20 @@ samp_ids = samp_ids.replace(' ', '_', regex = True)
 samp_ids.to_csv('data/sample_ids.txt', header = True, index = False, sep = '\t')
 ```
 
-2. **Reformat RepeatMasker results as a BED mask file**  
+2. **Create a list of distinguished individuals as input for a composite likelihood**  
+This step randomly samples 10 distinguished individuals for each population and writes them out to a text file to reference in the smc++ cv command. Iterating over multiple distinguished individuals enables a composite likelihood for the smc model. 
+
+```
+import pandas as pd
+
+samp_ids = pd.read_table("data/samp_ids.txt")
+
+dist_ind = samp_ids.groupby('Population', as_index = False).apply(pd.DataFrame.sample, n = 10, replace = False)
+
+dist_ind.to_csv('data/distinguished_individuals.txt', header = True, index = False, sep = '\t')
+```
+
+3. **Reformat RepeatMasker results as a BED mask file**  
 The mask file indicates regions that should be excluded from analysis (e.g. highly repetitive, poorly mapped regions) and is necessary to distinguish from long runs of homozygosity. It should be BED format (tab delimited) with no headers and three columns: chromosome, start position, stop position.
 
 ```
@@ -86,9 +99,9 @@ bgzip data/masked_regions.bed
 tabix -p bed data/masked_regions.bed.gz
 ```
 
-3. **Quick fix for SMC++ vcf2smc error**  
-Ran into a traceback error for Chr1 of the Eastern Cultivated population. This was fixed by following the advice documented [here](https://github.com/popgenmethods/smcpp/issues/167). Recoded missing data using the following command, and manually ran `smcpp vcf2smc` for chr1 of the Eastern Cultivated population:
+4. **Quick fix for SMC++ vcf2smc error**  
+Ran into a traceback error for Chr1 of the Eastern Cultivated population. This was fixed by following the advice documented [here](https://github.com/popgenmethods/smcpp/issues/167). Recoded missing data using the following command:
 
 ```
-plink --allow-extra-chr --chr DCARv3_Chr1 --keep-allele-order --out data/DCARv3_Chr1_recode --recode vcf-iid --vcf data/kevinG.d3.vcf.gz
+plink --allow-extra-chr --keep-allele-order --out data/kevinG.d3.recode --recode vcf-iid --vcf data/kevinG.d3.vcf.gz
 ```

@@ -6,39 +6,52 @@ rule joint_vcf2smc:
         index = config['vcf_index'],
         mask = config['mask']
     output:
-        "models/smc/split_input/{pop_pair}.{chr}.smc.gz"
+        out12 = "models/smc_split/input/{pop_pair}12.{chr}.smc.gz",
+        out21 = "models/smc_split/input/{pop_pair}21.{chr}.smc.gz"
     params:
     	chrom = "{chr}",
-    	pop_pair_string = pair_string_choose
+    	pop_pair_string12 = pair_string_choose12,
+        pop_pair_string21 = pair_string_choose21
     singularity:
         "docker://terhorst/smcpp:latest"
     shell:
-    	"smc++ vcf2smc \
-        --cores {threads} \
+        """
+        smc++ vcf2smc \
         --mask {input.mask} \
-        {input.vcf} {output} {params.chrom} {params.pop_pair_string}"
-#
-# rule split:
-#     input:
-#         expand("models/smc/split/{pop_pair}.{chr}.smc.gz", pop_pair = ['botrytis_italica', 'italica_botrytis'], chr = chr),
-#         expand("models/smc/input/{pop}.{chr}.smc.gz", pop = pops, chr = chr)
-#     threads: 16
-#     params:
-#         model_out_dir = "models/smc/split/test",
-#         marginal_models = model_chooser
-#     output:
-#         model_out = "models/smc/split/model.final.json"
-#     shell:
-#         "smc++ split \
-#         -o {params.model_out_dir} \
-#         --cores {threads} \
-#         {params.marginal_models} \
-#         {input}"
+        {input.vcf} {output.out12} {params.chrom} {params.pop_pair_string12}
+        smc++ vcf2smc \
+        --mask {input.mask} \
+        {input.vcf} {output.out21} {params.chrom} {params.pop_pair_string21}
+        """
 
-# # rule plot_split:
-# #     input:
-# #         model = "models/split/{rundate}.{dataset}/{pop_pair}/model.final.json"
-# #     output:
-# #         plot = "reports/figures/{rundate}.{dataset}.{pop_pair}.split.png"
-# #     shell:
-# #         "smc++ plot -c -g 2 {output.plot} {input.model}"
+rule smc_split:
+    input:
+        smc_split_input
+    threads: 20
+    params:
+        model_out_dir = "models/smc_split/{pop_pair}/"
+    output:
+        model_out = "models/smc_split/{pop_pair}/model.final.json"
+    singularity:
+        "docker://terhorst/smcpp:latest"
+    shell:
+        "smc++ split \
+        -o {params.model_out_dir} \
+        --cores {threads} \
+        {input}"
+
+rule plot_split:
+    input:
+        "models/smc_split/{pop_pair}/model.final.json"
+    output:
+        plot = "reports/figures/{pop_pair}.split.png"
+    params:
+        gen = config['gen']
+    singularity:
+        "docker://terhorst/smcpp:latest"
+    shell:
+        "smc++ plot \
+        --csv \
+        -g {params.gen} \
+        {output} \
+        {input}"

@@ -9,10 +9,13 @@
 # Column names: Population, Sample_ID
 samp_ids: data/sample_ids.txt
 
+# list of distinguished individuals to use for composite likelihood
+distinguished_inds: data/distinguished_individuals.txt
+
 # VCF file & index
 # can create index by using tabix -p vcf yourfile.vcf.gz
-vcf: data/kevinG.d3.vcf.gz
-vcf_index: data/kevinG.d3.vcf.gz.tbi
+vcf: data/kevinG.d3.recode.vcf.gz
+vcf_index: data/kevinG.d3.recode.vcf.gz.tbi
 
 # mask file to exclude poorly mapped regions (BED format)
 # should be a text file with a column for CHR, start, & stop positions
@@ -22,3 +25,6 @@ mask: data/masked_regions.bed.gz
 # estimate of per bp per generation mutation rate for SMC++
 # taken from lettuce (Asterid) - Zhang et al. doi:10.1038/s41467-017-02445-9
 mu: 4e-8
+
+# number of years per generation
+gen: 2

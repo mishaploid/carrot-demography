@@ -15,18 +15,23 @@ rule vcf2smc:
         index = config['vcf_index'],
         mask = config['mask']
     output:
-        "models/smc/input/{population}.{chr}.smc.gz"
+        "models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz"
     params:
         chrom = "{chr}",
     	# pop_choose exports a string of all individuals in current population
-        list = pop_choose
+        list = pop_choose,
+        # specify a distinguished individual
+        # iterates over 10 randomly sampled individuals per population
+        distind = "{distinguished_ind}"
     singularity:
         "docker://terhorst/smcpp:latest"
     shell:
     # argument order:
     # mask, input vcf, output directory, chromosome, population: list of individuals
         "smc++ vcf2smc \
-        --mask {input.mask} {input.vcf} {output} {params.chrom} {params.list}"
+        --mask {input.mask} \
+        -d {params.distind} {params.distind} \
+        {input.vcf} {output} {params.chrom} {params.list}"
 
 ################################################################################
 # STEP 2
@@ -36,14 +41,14 @@ rule vcf2smc:
 
 rule smc_cv:
     input:
-    	smc_chr = expand("models/smc/input/{{population}}.{chr}.smc.gz", chr = CHR)
+    	smc_cv_input
     output:
-    	cv_folds = expand("models/smc/{{population}}/fold{fold}/model.final.json", fold = ['0','1']),
-        final_model = "models/smc/{population}/model.final.json"
+    	cv_folds = expand("models/smc_cv/{{population}}/fold{fold}/model.final.json", fold = ['0','1']),
+        final_model = "models/smc_cv/{population}/model.final.json"
     threads: 16
     params:
     	model_in = "models/smc/input/{population}.*",
-    	model_out_dir = "models/smc/{population}",
+    	model_out_dir = "models/smc_cv/{population}",
     	mu = config['mu']
     singularity:
         "docker://terhorst/smcpp:latest"
@@ -51,6 +56,7 @@ rule smc_cv:
     	"smc++ cv \
         --cores {threads} \
         --spline cubic \
+        --timepoints 50 50000 \
     	-o {params.model_out_dir} {params.mu} {params.model_in}"
 
 ################################################################################
@@ -62,11 +68,13 @@ rule smc_cv:
 
 rule plot_estimate:
     input:
-        smc_out = expand("models/smc/{population}/model.final.json", population = popdict.keys())
+        smc_out = expand("models/smc_cv/{population}/model.final.json", population = popdict.keys())
     output:
         "reports/smc_cv_results.png"
     params:
-        gen = 2
+        gen = config['gen']
+    singularity:
+        "docker://terhorst/smcpp:latest"
     shell:
         "smc++ plot \
         --csv \
