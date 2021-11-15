@@ -1,16 +1,36 @@
 # # #Generate vcf2smc files containing the joint frequency spectrum for both populations
 
-rule joint_vcf2smc:
+rule joint_vcf2smc12:
     input:
         vcf = config['vcf'],
         index = config['vcf_index'],
         mask = config['mask']
     output:
-        out12 = "models/smc_split/input/{pop_pair}12.{chr}.smc.gz",
-        out21 = "models/smc_split/input/{pop_pair}21.{chr}.smc.gz"
+        out12 = "models/smc_split/input/{pop_pair}_12.{distinguished_ind1}.{chr}.smc.gz",
     params:
     	chrom = "{chr}",
-    	pop_pair_string12 = pair_string_choose12,
+        distind1 = "{distinguished_ind1}",
+    	pop_pair_string12 = pair_string_choose12
+    singularity:
+        "docker://terhorst/smcpp:latest"
+    shell:
+        """
+        smc++ vcf2smc \
+        --mask {input.mask} \
+        -d {params.distind1} {params.distind1} \
+        {input.vcf} {output.out12} {params.chrom} {params.pop_pair_string12}
+        """
+
+rule joint_vcf2smc21:
+    input:
+        vcf = config['vcf'],
+        index = config['vcf_index'],
+        mask = config['mask']
+    output:
+        out21 = "models/smc_split/input/{pop_pair}_21.{distinguished_ind2}.{chr}.smc.gz"
+    params:
+    	chrom = "{chr}",
+        distind2 = "{distinguished_ind2}",
         pop_pair_string21 = pair_string_choose21
     singularity:
         "docker://terhorst/smcpp:latest"
@@ -18,16 +38,13 @@ rule joint_vcf2smc:
         """
         smc++ vcf2smc \
         --mask {input.mask} \
-        {input.vcf} {output.out12} {params.chrom} {params.pop_pair_string12}
-        smc++ vcf2smc \
-        --mask {input.mask} \
+        -d {params.distind2} {params.distind2} \
         {input.vcf} {output.out21} {params.chrom} {params.pop_pair_string21}
         """
 
 rule smc_split:
     input:
         smc_split_input
-    threads: 20
     params:
         model_out_dir = "models/smc_split/{pop_pair}/"
     output:
@@ -37,7 +54,6 @@ rule smc_split:
     shell:
         "smc++ split \
         -o {params.model_out_dir} \
-        --cores {threads} \
         {input}"
 
 rule plot_split:

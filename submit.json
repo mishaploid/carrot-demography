@@ -13,22 +13,37 @@
     },
     "smc_cv" :
     {
-      "mem" : "128G",
-      "p" : "med2"
+      "mem" : "260G",
+      "p" : "bigmemm"
     },
     "plot_estimate" :
     {
       "mem" : "1G",
       "p" : "med2"
     },
-    "joint_vcf2smc" :
+    "smc_bootstrap_input" :
+    {
+      "mem" : "80G",
+      "p" : "med2"
+    },
+    "smc_cv_bootstrap" :
+    {
+      "mem" : "240G",
+      "p" : "bigmemm"
+    },
+    "joint_vcf2smc12" :
+    {
+      "mem" : "30G",
+      "p" : "med2"
+    },
+    "joint_vcf2smc21" :
     {
       "mem" : "30G",
       "p" : "med2"
     },
     "smc_split" :
     {
-      "mem" : "240G",
+      "mem" : "600G",
       "p" : "bigmemm"
     },
     "plot_split" :

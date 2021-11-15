@@ -48,29 +48,36 @@ This step allows easier formatting to paste input strings of population/samples 
 import pandas as pd
 
 # Read in ADMIXTURE results
-samp_info = pd.read_excel(r'data/Resequencing_population_assignments.xlsx', sheet_name = 'Ultralow_admixture')
+# samp_info = pd.read_excel(r'data/Resequencing_population_assignments.xlsx', sheet_name = 'Ultralow_admixture')
+samp_info = pd.read_excel(r'data/Passport_data.mar.30.21.xlsx', sheet_name = 'Admixture.10')
 
 # select population group and sample id & convert to string
-samp_ids = samp_info[['Population', 'Sample_ID']].astype(str)
+# samp_ids = samp_info[['Population', 'Sample_ID']].astype(str)
+samp_ids = samp_info[['Largest Proportion', 'Sample_ID']].astype(str)
+samp_ids.columns = ['Population', 'Sample_ID']
 
 # replace spaces with '_'
 samp_ids = samp_ids.replace(' ', '_', regex = True)
 
+samp_ids.Population[samp_ids['Sample_ID'].isin(['GH7097', 'GH7098', 'GH7099', 'W4', 'GH7115'])] = 'Landrace_A_Wild'
+
 # export formatted population and sample ids
-samp_ids.to_csv('data/sample_ids.txt', header = True, index = False, sep = '\t')
+# samp_ids.to_csv('data/sample_ids.txt', header = True, index = False, sep = '\t')
+
+samp_ids.to_csv('data/sample_ids_admix10.txt', header = True, index = False, sep = '\t')
 ```
 
 2. **Create a list of distinguished individuals as input for a composite likelihood**  
-This step randomly samples 10 distinguished individuals for each population and writes them out to a text file to reference in the smc++ cv command. Iterating over multiple distinguished individuals enables a composite likelihood for the smc model. 
+This step randomly samples 10 distinguished individuals for each population and writes them out to a text file to reference in the smc++ cv command. Iterating over multiple distinguished individuals enables a composite likelihood for the smc model.
 
 ```
 import pandas as pd
 
-samp_ids = pd.read_table("data/samp_ids.txt")
+samp_ids = pd.read_table("data/sample_ids_admix10.txt")
 
-dist_ind = samp_ids.groupby('Population', as_index = False).apply(pd.DataFrame.sample, n = 10, replace = False)
+dist_ind = samp_ids.groupby('Population', as_index = False).apply(pd.DataFrame.sample, n = 5, replace = False)
 
-dist_ind.to_csv('data/distinguished_individuals.txt', header = True, index = False, sep = '\t')
+dist_ind.to_csv('data/distinguished_individuals_admix10.txt', header = True, index = False, sep = '\t')
 ```
 
 3. **Reformat RepeatMasker results as a BED mask file**  

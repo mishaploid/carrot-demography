@@ -7,10 +7,10 @@
 # file path for population and sample ids
 # Two column tab-delimited file
 # Column names: Population, Sample_ID
-samp_ids: data/sample_ids.txt
+samp_ids: data/sample_ids_admix10.txt
 
 # list of distinguished individuals to use for composite likelihood
-distinguished_inds: data/distinguished_individuals.txt
+distinguished_inds: data/distinguished_individuals_admix10.txt
 
 # VCF file & index
 # can create index by using tabix -p vcf yourfile.vcf.gz
