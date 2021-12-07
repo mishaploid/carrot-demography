@@ -53,6 +53,7 @@ rule smc_split:
         "docker://terhorst/smcpp:latest"
     shell:
         "smc++ split \
+        --cores 2 \
         -o {params.model_out_dir} \
         {input}"
 

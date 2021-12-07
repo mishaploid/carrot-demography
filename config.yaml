@@ -14,8 +14,10 @@ distinguished_inds: data/distinguished_individuals_admix10.txt
 
 # VCF file & index
 # can create index by using tabix -p vcf yourfile.vcf.gz
-vcf: data/kevinG.d3.recode.vcf.gz
-vcf_index: data/kevinG.d3.recode.vcf.gz.tbi
+# vcf: data/kevinG.d3.recode.vcf.gz
+# vcf_index: data/kevinG.d3.recode.vcf.gz.tbi
+vcf: data/kevinG.d3.recode.missing10.vcf.gz
+vcf_index: data/kevinG.d3.recode.missing10.vcf.gz.tbi
 
 # mask file to exclude poorly mapped regions (BED format)
 # should be a text file with a column for CHR, start, & stop positions

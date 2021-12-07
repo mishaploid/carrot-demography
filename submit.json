@@ -16,6 +16,11 @@
       "mem" : "260G",
       "p" : "bigmemm"
     },
+    "smc_estimate" :
+    {
+      "mem" : "200G",
+      "p" : "med2"
+    },
     "plot_estimate" :
     {
       "mem" : "1G",
@@ -43,7 +48,7 @@
     },
     "smc_split" :
     {
-      "mem" : "600G",
+      "mem" : "250G",
       "p" : "bigmemm"
     },
     "plot_split" :

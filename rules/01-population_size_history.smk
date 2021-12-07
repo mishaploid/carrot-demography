@@ -40,24 +40,42 @@ rule vcf2smc:
 #   cv method uses cross-validation to obtain model parameters
 ################################################################################
 
-rule smc_cv:
+# rule smc_cv:
+#     input:
+#     	smc_cv_input
+#     output:
+#     	cv_folds = expand("models/smc_cv_no_timepoints/{{population}}/fold{fold}/model.final.json", fold = ['0','1']),
+#         final_model = "models/smc_cv_no_timepoints/{population}/model.final.json"
+#     threads: 25
+#     params:
+#     	model_in = "models/smc/input/{population}.*",
+#     	model_out_dir = "models/smc_cv_no_timepoints/{population}",
+#     	mu = config['mu']
+#     singularity:
+#         "docker://terhorst/smcpp:latest"
+#     shell:
+#     	"smc++ cv \
+#         --cores {threads} \
+#         --spline cubic \
+#         --ftol 0.001 \
+#     	-o {params.model_out_dir} {params.mu} {params.model_in}"
+
+rule smc_estimate:
     input:
     	smc_cv_input
     output:
-    	cv_folds = expand("models/smc_cv_no_timepoints/{{population}}/fold{fold}/model.final.json", fold = ['0','1']),
-        final_model = "models/smc_cv_no_timepoints/{population}/model.final.json"
+        final_model = "models/smc_estimate_no_timepoints/{population}/model.final.json"
     threads: 25
     params:
     	model_in = "models/smc/input/{population}.*",
-    	model_out_dir = "models/smc_cv_no_timepoints/{population}",
+    	model_out_dir = "models/smc_estimate_no_timepoints/{population}",
     	mu = config['mu']
     singularity:
         "docker://terhorst/smcpp:latest"
     shell:
-    	"smc++ cv \
+    	"smc++ estimate \
         --cores {threads} \
         --spline cubic \
-        --ftol 0.001 \
     	-o {params.model_out_dir} {params.mu} {params.model_in}"
 
 ################################################################################
@@ -69,9 +87,9 @@ rule smc_cv:
 
 rule plot_estimate:
     input:
-        smc_out = expand("models/smc_cv_no_timepoints/{population}/model.final.json", population = popdict.keys())
+        smc_out = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = popdict.keys())
     output:
-        "reports/smc_cv_no_timepoints_results.png"
+        "reports/smc_estimate_no_timepoints_results.png"
     params:
         gen = config['gen']
     singularity:

@@ -30,6 +30,7 @@ CHR = ['DCARv3_Chr' + str(n) for n in range(1,10)]
 dist_ind = pd.read_table(config['distinguished_inds'])
 
 # dist_ind = dist_ind[dist_ind.Population != 'Improved_Cultivar']
+# dist_ind = dist_ind[(dist_ind.Population == 'Landrace_A') | (dist_ind.Population == 'Landrace_B')]
 
 dist_list = dist_ind.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist())
 
@@ -104,9 +105,16 @@ def pop_choose(wildcards):
 # 'Eastern_Cultivar':['Eastern_Cultivated', 'Cultivar'],
 # 'Western_Cultivar':['Western_Cultivated', 'Cultivar']}
 
-pop_pair_dict = {'LandraceA_LAwild':['Landrace_A', 'LandraceAWild'],
-'LandraceA_LandraceB':['Landrace_A', 'Landrace_B'],
-'LandraceB_LAwild':['Landrace_B', 'LandraceAWild']}
+pop_pair_dict = {'LandraceA_LandraceB':['Landrace_A', 'Landrace_B'],
+'LandraceA_LAwild':['Landrace_A', 'LandraceAWild'],
+'LandraceA_Wild':['Landrace_A', 'Wild'],
+'LandraceA_EarlyCultivar':['Landrace_A', 'Early_Cultivar'],
+'LandraceA_ImprovedCultivar':['Landrace_A', 'Improved_Cultivar'],
+'EarlyCultivar_ImprovedCultivar':['Early_Cultivar', 'Improved_Cultivar'],
+'EarlyCultivar_Wild':['Early_Cultivar', 'Wild'],
+'ImprovedCultivar_Wild':['Improved_Cultivar', 'Wild']}
+# 'LandraceA_LAwild':['Landrace_A', 'LandraceAWild'],
+# 'LandraceB_LAwild':['Landrace_B', 'LandraceAWild']}
 
 # def pop_pair_choose(wildcards):
 # 	list = popdict[wildcards.pop_pair]
@@ -151,7 +159,7 @@ smc_split_input_files21 = [expand('models/smc_split/input/{pop_pair}_21.{disting
 
 def smc_split_input(wildcards):
     pops = pop_pair_dict[wildcards.pop_pair]
-    models = expand("models/smc_cv/{population}/model.final.json", population = pops)
+    models = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = pops)
     pop1_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[0], distinguished_ind=dist_dict[pops[0]], chr=CHR)
     pop2_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[1], distinguished_ind=dist_dict[pops[1]], chr=CHR)
     joint_input12 = expand("models/smc_split/input/{pop_pair}_12.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[0]], chr = CHR)
@@ -168,6 +176,7 @@ rule all:
 	input:
 		vcf2smc = smc_input_files,
 		# smc_cv = expand("models/smc_cv_no_timepoints/{population}/model.final.json", population = popdict.keys()),
+		smc_estimate = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = dist_dict.keys()),
 		# plot_estimate = "reports/smc_cv_no_timepoints_results.png",
         # smc_bootstrap = [expand('models/smc/bootstrap_input/{population}/{distinguished_ind}_{n_bootstrap}/bootstrap_{chr}.smc.gz',
         # population = key, distinguished_ind = value, chr = CHR)
