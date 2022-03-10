@@ -6,7 +6,7 @@ rule joint_vcf2smc12:
         index = config['vcf_index'],
         mask = config['mask']
     output:
-        out12 = "models/smc_split/input/{pop_pair}_12.{distinguished_ind1}.{chr}.smc.gz",
+        out12 = "models/smc_split_input/{pop_pair}_12.{distinguished_ind1}.{chr}.smc.gz",
     params:
     	chrom = "{chr}",
         distind1 = "{distinguished_ind1}",
@@ -27,7 +27,7 @@ rule joint_vcf2smc21:
         index = config['vcf_index'],
         mask = config['mask']
     output:
-        out21 = "models/smc_split/input/{pop_pair}_21.{distinguished_ind2}.{chr}.smc.gz"
+        out21 = "models/smc_split_input/{pop_pair}_21.{distinguished_ind2}.{chr}.smc.gz"
     params:
     	chrom = "{chr}",
         distind2 = "{distinguished_ind2}",
@@ -53,7 +53,7 @@ rule smc_split:
         "docker://terhorst/smcpp:latest"
     shell:
         "smc++ split \
-        --cores 2 \
+        --cores 8 \
         -o {params.model_out_dir} \
         {input}"
 
@@ -71,4 +71,62 @@ rule plot_split:
         --csv \
         -g {params.gen} \
         {output} \
+        {input}"
+
+# bootstrapping
+rule joint_bootstrap_vcf2smc12:
+    input:
+        expand("models/smc_split_input/{{pop_pair}}_12.{{distinguished_ind1}}.{chr}.smc.gz", chr = CHR)
+    output:
+        expand('models/smc_split_bootstrap_input/{{pop_pair}}_12.{{distinguished_ind1}}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz', n_bootstrap = range(1,11), boot_chr = range(1,10)),
+    params:
+    	pop_pair = "{pop_pair}",
+        distind1 = "{distinguished_ind1}",
+        nr_bootstraps = 10,
+        chunk_size = 5000000,
+        nr_chr = 9,
+        input_dir = "models/smc_split_input/{pop_pair}_12.{distinguished_ind1}*"
+    shell:
+        "python3 scripts/smc_bootstrap.py \
+        --nr_bootstraps {params.nr_bootstraps} \
+        --chunk_size {params.chunk_size} \
+        --chunks_per_chromosome 10 \
+        --nr_chromosomes {params.nr_chr} \
+        models/smc_split_bootstrap_input/{params.pop_pair}_12.{params.distind1}_rep \
+        {params.input_dir}"
+
+rule joint_bootstrap_vcf2smc21:
+    input:
+        expand("models/smc_split_input/{{pop_pair}}_21.{{distinguished_ind1}}.{chr}.smc.gz", chr = CHR)
+    output:
+        expand('models/smc_split_bootstrap_input/{{pop_pair}}_21.{{distinguished_ind1}}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz', n_bootstrap = range(1,11), boot_chr = range(1,10)),
+    params:
+    	pop_pair = "{pop_pair}",
+        distind1 = "{distinguished_ind1}",
+        nr_bootstraps = 10,
+        chunk_size = 5000000,
+        nr_chr = 9,
+        input_dir = "models/smc_split_input/{pop_pair}_21.{distinguished_ind1}*"
+    shell:
+        "python3 scripts/smc_bootstrap.py \
+        --nr_bootstraps {params.nr_bootstraps} \
+        --chunk_size {params.chunk_size} \
+        --chunks_per_chromosome 10 \
+        --nr_chromosomes {params.nr_chr} \
+        models/smc_split_bootstrap_input/{params.pop_pair}_21.{params.distind1}_rep \
+        {params.input_dir}"
+
+rule smc_split_bootstrap:
+    input:
+        smc_split_bootstrap_input
+    params:
+        model_out_dir = "models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}"
+    output:
+        model_out = "models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}/model.final.json"
+    singularity:
+        "docker://terhorst/smcpp:latest"
+    shell:
+        "smc++ split \
+        --cores 2 \
+        -o {params.model_out_dir} \
         {input}"

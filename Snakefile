@@ -29,31 +29,32 @@ CHR = ['DCARv3_Chr' + str(n) for n in range(1,10)]
 ################################################################################
 dist_ind = pd.read_table(config['distinguished_inds'])
 
-# dist_ind = dist_ind[dist_ind.Population != 'Improved_Cultivar']
+dist_ind = dist_ind[dist_ind.Population != 'LandraceAWild']
 # dist_ind = dist_ind[(dist_ind.Population == 'Landrace_A') | (dist_ind.Population == 'Landrace_B')]
 
 dist_list = dist_ind.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist())
 
 dist_dict = dist_list.to_dict()
 
+
 # create a list of filenames for smc++ input files using different distinguished individuals (output of vcf2smc)
-smc_input_files = [expand('models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz',
+smc_input_files = [expand('models/smc_estimate_input/{population}.{distinguished_ind}.{chr}.smc.gz',
                     population = key, distinguished_ind = value, chr = CHR)
                     for key, value in dist_dict.items()]
 
 # for bootstrapped inputs
-smc_bootstrap_input = [expand('models/smc/bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',
+smc_bootstrap_input = [expand('models/smc_estimate_bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',
                     population = key, distinguished_ind = value, n_bootstrap = range(1,11), boot_chr = range(1,10))
                     for key, value in dist_dict.items()]
 
 # create a list of filenames to feed into smc++ cv command
 # want to include all .smc.gz files for each population (includes all chromosomes and distinguished individuals)
-def smc_cv_input(wildcards):
-    files = expand('models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz', chr=CHR, population=wildcards.population, distinguished_ind=dist_dict[wildcards.population])
+def smc_estimate_input(wildcards):
+    files = expand('models/smc_estimate_input/{population}.{distinguished_ind}.{chr}.smc.gz', chr=CHR, population=wildcards.population, distinguished_ind=dist_dict[wildcards.population])
     return files
 
-def smc_cv_boot_input(wildcards):
-    files = expand('models/smc/bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',  population=wildcards.population, distinguished_ind=dist_dict[wildcards.population],
+def smc_estimate_boot_input(wildcards):
+    files = expand('models/smc_estimate_bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',  population=wildcards.population, distinguished_ind=dist_dict[wildcards.population],
     n_bootstrap = range(1,11),
     boot_chr = range(1,10))
     return files
@@ -66,7 +67,7 @@ def smc_cv_boot_input(wildcards):
 # read in list of sample and population ids
 samp_ids = pd.read_table(config['samp_ids'])
 
-# samp_ids = samp_ids[samp_ids.Population != 'Improved_Cultivar']
+samp_ids = samp_ids[samp_ids.Population != 'LandraceAWild']
 
 # create a list of samples for each population
 samp_list =  samp_ids.groupby('Population')['Sample_ID'].apply(lambda x: x.tolist())
@@ -94,31 +95,18 @@ def pop_choose(wildcards):
 ################################################################################
 
 # # dictionary of population pairs to estimate divergence
-# pop_pair_dict = {'Wild_CentralAsianCultivated':['Wild', 'Central_Asian_Cultivated'],
-# 'Wild_EasternCultivated':['Wild', 'Eastern_Cultivated'],
-# 'Wild_WesternCultivated':['Wild', 'Western_Cultivated'],
-# 'Wild_Cultivar':['Wild', 'Cultivar'],
-# 'CentralAsian_Eastern':['Central_Asian_Cultivated', 'Eastern_Cultivated'],
-# 'CentralAsian_Western':['Central_Asian_Cultivated', 'Western_Cultivated'],
-# 'CentralAsian_Cultivar':['Central_Asian_Cultivated', 'Cultivar'],
-# 'Eastern_Western':['Eastern_Cultivated', 'Western_Cultivated'],
-# 'Eastern_Cultivar':['Eastern_Cultivated', 'Cultivar'],
-# 'Western_Cultivar':['Western_Cultivated', 'Cultivar']}
 
 pop_pair_dict = {'LandraceA_LandraceB':['Landrace_A', 'Landrace_B'],
-'LandraceA_LAwild':['Landrace_A', 'LandraceAWild'],
 'LandraceA_Wild':['Landrace_A', 'Wild'],
 'LandraceA_EarlyCultivar':['Landrace_A', 'Early_Cultivar'],
 'LandraceA_ImprovedCultivar':['Landrace_A', 'Improved_Cultivar'],
 'EarlyCultivar_ImprovedCultivar':['Early_Cultivar', 'Improved_Cultivar'],
 'EarlyCultivar_Wild':['Early_Cultivar', 'Wild'],
-'ImprovedCultivar_Wild':['Improved_Cultivar', 'Wild']}
+'ImprovedCultivar_Wild':['Improved_Cultivar', 'Wild'],
+'LandraceB_EarlyCultivar':['Landrace_B', 'Early_Cultivar'],
+'LandraceB_ImprovedCultivar':['Landrace_B', 'Improved_Cultivar'],
+'LandraceB_Wild':['Landrace_B', 'Wild']}
 # 'LandraceA_LAwild':['Landrace_A', 'LandraceAWild'],
-# 'LandraceB_LAwild':['Landrace_B', 'LandraceAWild']}
-
-# def pop_pair_choose(wildcards):
-# 	list = popdict[wildcards.pop_pair]
-# 	return list
 
 # for split time:
 # based on current wildcard, find pop pair in pop_pair_dict
@@ -141,29 +129,45 @@ def pair_string_choose21(wildcards):
     return pop_pair_string21
 
 # # create a list of filenames for smc++ input files using different distinguished individuals
-smc_split_input_files12 = [expand('models/smc_split/input/{pop_pair}_12.{distinguished_ind1}.{chr}.smc.gz',
+smc_split_input_files12 = [expand('models/smc_split_input/{pop_pair}_12.{distinguished_ind1}.{chr}.smc.gz',
                     pop_pair = key, distinguished_ind1 = dist_dict[value[0]], chr = CHR)
                     for key, value in pop_pair_dict.items()]
 
-smc_split_input_files21 = [expand('models/smc_split/input/{pop_pair}_21.{distinguished_ind2}.{chr}.smc.gz',
+smc_split_input_files21 = [expand('models/smc_split_input/{pop_pair}_21.{distinguished_ind2}.{chr}.smc.gz',
                     pop_pair = key, distinguished_ind2 = dist_dict[value[1]], chr = CHR)
                     for key, value in pop_pair_dict.items()]
 
-# def smc_split_input_files(wildcards):
-#     pops = pop_pair_dict[wildcards.pop_pair]
-#     joint_input12 = expand("models/smc_split/input/{pop_pair}12.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[0]], chr = CHR)
-#     joint_input21 = expand("models/smc_split/input/{pop_pair}21.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[1]], chr = CHR)
-#     return joint_input12 + joint_input21
+
+# list of filenames for split bootstrapping
+smc_split_bootstrap_input_12 = [expand('models/smc_split_bootstrap_input/{pop_pair}_12.{distinguished_ind1}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',
+                    pop_pair = key, distinguished_ind1 = dist_dict[value[0]], n_bootstrap = range(1,11), boot_chr = range(1,10))
+                    for key, value in pop_pair_dict.items()]
+
+smc_split_bootstrap_input_21 = [expand('models/smc_split_bootstrap_input/{pop_pair}_21.{distinguished_ind2}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',
+                    pop_pair = key, distinguished_ind2 = dist_dict[value[1]], n_bootstrap = range(1,11), boot_chr = range(1,10))
+                    for key, value in pop_pair_dict.items()]
+
 
 # # create string: location of model.final.json for each pop
 
 def smc_split_input(wildcards):
     pops = pop_pair_dict[wildcards.pop_pair]
     models = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = pops)
-    pop1_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[0], distinguished_ind=dist_dict[pops[0]], chr=CHR)
-    pop2_input = expand("models/smc/input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[1], distinguished_ind=dist_dict[pops[1]], chr=CHR)
-    joint_input12 = expand("models/smc_split/input/{pop_pair}_12.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[0]], chr = CHR)
-    joint_input21 = expand("models/smc_split/input/{pop_pair}_21.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[1]], chr = CHR)
+    pop1_input = expand("models/smc_estimate_input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[0], distinguished_ind=dist_dict[pops[0]], chr=CHR)
+    pop2_input = expand("models/smc_estimate_input/{population}.{distinguished_ind}.{chr}.smc.gz", population=pops[1], distinguished_ind=dist_dict[pops[1]], chr=CHR)
+    joint_input12 = expand("models/smc_split_input/{pop_pair}_12.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[0]], chr = CHR)
+    joint_input21 = expand("models/smc_split_input/{pop_pair}_21.{distinguished_ind}.{chr}.smc.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[1]], chr = CHR)
+    return models + pop1_input + pop2_input + joint_input12 + joint_input21
+
+def smc_split_bootstrap_input(wildcards):
+    pops = pop_pair_dict[wildcards.pop_pair]
+    models = expand("models/smc_estimate_no_timepoints_bootstrap/{population}_{n_bootstrap}/model.final.json", population = pops, n_bootstrap = wildcards.n_bootstrap)
+    pop1_input = expand('models/smc_estimate_bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',  population=pops[0], distinguished_ind=dist_dict[pops[0]],
+    n_bootstrap = wildcards.n_bootstrap, boot_chr = range(1,10))
+    pop2_input = expand('models/smc_estimate_bootstrap_input/{population}_{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz',  population=pops[1], distinguished_ind=dist_dict[pops[1]],
+    n_bootstrap = wildcards.n_bootstrap, boot_chr = range(1,10))
+    joint_input12 = expand("models/smc_split_bootstrap_input/{pop_pair}_12.{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[0]], n_bootstrap = wildcards.n_bootstrap, boot_chr = range(1,10))
+    joint_input21 = expand("models/smc_split_bootstrap_input/{pop_pair}_21.{distinguished_ind}_rep_{n_bootstrap}/bootstrap_chr{boot_chr}.gz", pop_pair = wildcards.pop_pair, distinguished_ind=dist_dict[pops[1]], n_bootstrap = wildcards.n_bootstrap, boot_chr = range(1,10))
     return models + pop1_input + pop2_input + joint_input12 + joint_input21
 
 
@@ -177,18 +181,15 @@ rule all:
 		vcf2smc = smc_input_files,
 		# smc_cv = expand("models/smc_cv_no_timepoints/{population}/model.final.json", population = popdict.keys()),
 		smc_estimate = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = dist_dict.keys()),
-		# plot_estimate = "reports/smc_cv_no_timepoints_results.png",
-        # smc_bootstrap = [expand('models/smc/bootstrap_input/{population}/{distinguished_ind}_{n_bootstrap}/bootstrap_{chr}.smc.gz',
-        # population = key, distinguished_ind = value, chr = CHR)
-        # for key, value in dist_dict.items()],
+		plot_estimate = "reports/carrot_all_pops_smc_estimate_no_timepoints.png",
         smc_bootstrap = smc_bootstrap_input,
         # smc_cv_bootstrap = expand("models/smc_cv_bootstrap/{population}_{n_bootstrap}/model.final.json", population = popdict.keys(), n_bootstrap = range(1,11)),
         joint_vcf2smc12 = smc_split_input_files12,
         joint_vcf2smc21 = smc_split_input_files21,
-        ### need to edit here
-        # joint_vcf2smc = expand("models/smc_split/input/{pop_pair}{order}.{distinguished_ind}.{chr}.smc.gz", pop_pair = pop_pair_dict.keys(), order = [12, 21], distinguished_ind = chr = CHR),
-        ## end edit
         smc_split = expand("models/smc_split/{pop_pair}/model.final.json", pop_pair = pop_pair_dict.keys()),
+        joint_bootstrap_vcf2smc12 = smc_split_bootstrap_input_12,
+        joint_bootstrap_vcf2smc21 = smc_split_bootstrap_input_21,
+        smc_split_bootstrap = expand("models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}/model.final.json", pop_pair = pop_pair_dict.keys(), n_bootstrap = range(1,11))
         # plot_split = expand("reports/figures/{pop_pair}.split.png", pop_pair = pop_pair_dict.keys())
 
 ################################################################################

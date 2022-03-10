@@ -6,6 +6,8 @@ echo $date
 module load R
 module load singularity
 
+mkdir -p slurm_out
+
 
 snakemake --jobs 200 --use-conda \
 --use-singularity \
