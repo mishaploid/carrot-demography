@@ -181,7 +181,7 @@ rule all:
 		vcf2smc = smc_input_files,
 		# smc_cv = expand("models/smc_cv_no_timepoints/{population}/model.final.json", population = popdict.keys()),
 		smc_estimate = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = dist_dict.keys()),
-		plot_estimate = "reports/carrot_all_pops_smc_estimate_no_timepoints.png",
+		plot_estimate = ("reports/carrot_all_pops_smc_estimate_no_timepoints.png", "reports/carrot_all_pops_smc_estimate_no_timepoints_bootstrap.png"),
         smc_bootstrap = smc_bootstrap_input,
         # smc_cv_bootstrap = expand("models/smc_cv_bootstrap/{population}_{n_bootstrap}/model.final.json", population = popdict.keys(), n_bootstrap = range(1,11)),
         joint_vcf2smc12 = smc_split_input_files12,
@@ -189,8 +189,8 @@ rule all:
         smc_split = expand("models/smc_split/{pop_pair}/model.final.json", pop_pair = pop_pair_dict.keys()),
         joint_bootstrap_vcf2smc12 = smc_split_bootstrap_input_12,
         joint_bootstrap_vcf2smc21 = smc_split_bootstrap_input_21,
-        smc_split_bootstrap = expand("models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}/model.final.json", pop_pair = pop_pair_dict.keys(), n_bootstrap = range(1,11))
-        # plot_split = expand("reports/figures/{pop_pair}.split.png", pop_pair = pop_pair_dict.keys())
+        smc_split_bootstrap = expand("models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}/model.final.json", pop_pair = pop_pair_dict.keys(), n_bootstrap = range(1,11)),
+        plot_split = ("reports/carrot_all_pops_smc_split.png", "reports/carrot_all_pops_smc_split_bootstrap.png")
 
 ################################################################################
 ## Rule files to include

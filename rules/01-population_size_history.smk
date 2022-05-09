@@ -78,32 +78,9 @@ rule smc_estimate:
         --spline cubic \
     	-o {params.model_out_dir} {params.mu} {params.model_in}"
 
+
 ################################################################################
 # STEP 3
-# Plot results for population size history estimates
-#   --csv exports a csv formatted file with results
-#   -g specifies the number of years per generation
-################################################################################
-
-rule plot_estimate:
-    input:
-        smc_out = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = popdict.keys())
-    output:
-        "reports/carrot_all_pops_smc_estimate_no_timepoints.png"
-    params:
-        gen = config['gen']
-    singularity:
-        "docker://terhorst/smcpp:latest"
-    shell:
-        "smc++ plot \
-        --csv \
-        -g {params.gen} \
-        {output} \
-        {input.smc_out}"
-
-
-################################################################################
-# STEP 4
 # Bootstrapping
 #   split smc input files into chunks and resample
 ################################################################################
@@ -165,3 +142,35 @@ rule smc_estimate_bootstrap:
         --cores {threads} \
         --spline cubic \
     	-o {params.model_out_dir} {params.mu} {params.model_in}"
+
+################################################################################
+# STEP 4
+# Plot results for population size history estimates
+#   --csv exports a csv formatted file with results
+#   -g specifies the number of years per generation
+################################################################################
+
+rule plot_estimate:
+    input:
+        smc_out = expand("models/smc_estimate_no_timepoints/{population}/model.final.json", population = popdict.keys()),
+        smc_bootstrap_out = expand("models/smc_estimate_no_timepoints_bootstrap/{population}_{n_bootstrap}/model.final.json", population = popdict.keys(), n_bootstrap = range(1,11))
+    output:
+        smc = "reports/carrot_all_pops_smc_estimate_no_timepoints.png",
+        bootstrap = "reports/carrot_all_pops_smc_estimate_no_timepoints_bootstrap.png"
+    params:
+        gen = config['gen']
+    singularity:
+        "docker://terhorst/smcpp:latest"
+    shell:
+        """
+        smc++ plot \
+        --csv \
+        -g {params.gen} \
+        {output.smc} \
+        {input.smc_out}
+        smc++ plot \
+        --csv \
+        -g {params.gen} \
+        {output.bootstrap} \
+        {input.smc_bootstrap_out}
+        """

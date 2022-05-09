@@ -24,7 +24,7 @@
     "plot_estimate" :
     {
       "mem" : "1G",
-      "p" : "med2"
+      "p" : "high2"
     },
     "smc_bootstrap_input" :
     {
@@ -53,7 +53,7 @@
     },
     "smc_split" :
     {
-      "mem" : "600G",
+      "mem" : "500G",
       "p" : "bigmemm"
     },
     "joint_bootstrap_vcf2smc12" :
@@ -68,7 +68,12 @@
     },
     "smc_split_bootstrap" :
     {
-      "mem" : "300G",
+      "mem" : "400G",
       "p" : "bigmemm"
+    },
+    "plot_split" :
+    {
+      "mem" : "1G",
+      "p" : "high2"
     }
 }
