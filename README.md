@@ -2,6 +2,8 @@
 
 This repo is a snakemake workflow to run demographic analysis using the SMC++ software for carrot.
 
+Reference: Coe, K., Bostan, H., Rolling, W. et al. Population genomics identifies genetic signatures of carrot domestication and improvement and uncovers the origin of high-carotenoid orange carrots. Nat. Plants 9, 1643–1658 (2023). https://doi.org/10.1038/s41477-023-01526-6
+
 ## Key dependencies
 * Snakemake (see setup)
 * Singularity or docker (note that workflow is set up to access a docker image through singularity)
@@ -21,7 +23,7 @@ Data is not uploaded to git, but includes the following files:
 
 1. `Snakefile` - This is the workhorse file for Snakemake and tracks the expected output files in addition to including some python code to format input variables.
 
-1. `rules/` - Folder containing rules files (`.smk`) that are called by snakemake. For this project, `rules/run_smc.smk` contains the code necessary to run SMC++ to estimate effective population size.  
+1. `rules/` - Folder containing rules files (`.smk`) that are called by snakemake. For this project, `rules/01-population_size_history.smk` contains the code necessary to run SMC++ to estimate effective population size.  
 
 1. `config.yaml` - This file can be edited to adjust file paths for input files and parameters to run SMC++
 
