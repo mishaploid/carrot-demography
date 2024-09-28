@@ -1,5 +1,19 @@
-# # #Generate vcf2smc files containing the joint frequency spectrum for both populations
+# Estimating divergence times with SMC++ 
+# Check out SMC++ git repo for additional documentation:
+#   https://github.com/popgenmethods/smcpp
 
+################################################################################
+# STEP 1
+# Create SMC++ input files for the joint frequency spectrum of two populations
+#   --mask = poorly mapped regions to exclude from analysis
+#            otherwise assumes missing data = regions of homozygosity
+#   -d = distinguished individual for first pop listed
+#   argument order:
+#       mask, distinguished individual, input vcf, output directory, chromosome, 
+#       population A: list of individuals, population B: list of individuals
+################################################################################
+
+# PopA_PopB
 rule joint_vcf2smc12:
     input:
         vcf = config['vcf'],
@@ -21,6 +35,7 @@ rule joint_vcf2smc12:
         {input.vcf} {output.out12} {params.chrom} {params.pop_pair_string12}
         """
 
+# PopB_PopA
 rule joint_vcf2smc21:
     input:
         vcf = config['vcf'],
@@ -42,6 +57,14 @@ rule joint_vcf2smc21:
         {input.vcf} {output.out21} {params.chrom} {params.pop_pair_string21}
         """
 
+################################################################################
+# STEP 2
+# Estimate a joint demography for two populations
+# inputs include marginal estimates of demography from each population,
+# and smc.gz input files for each individual population and for the joint 
+# frequency spectrum 
+################################################################################
+
 rule smc_split:
     input:
         smc_split_input
@@ -57,8 +80,12 @@ rule smc_split:
         -o {params.model_out_dir} \
         {input}"
 
+################################################################################
+# STEP 3
+# Bootstrapping
+#   uses smc.gz inputs split into chunks and resampled 
+################################################################################
 
-# bootstrapping
 rule joint_bootstrap_vcf2smc12:
     input:
         expand("models/smc_split_input/{{pop_pair}}_12.{{distinguished_ind1}}.{chr}.smc.gz", chr = CHR)
@@ -72,13 +99,15 @@ rule joint_bootstrap_vcf2smc12:
         nr_chr = 9,
         input_dir = "models/smc_split_input/{pop_pair}_12.{distinguished_ind1}*"
     shell:
-        "python3 scripts/smc_bootstrap.py \
+        """
+        python3 scripts/smc_bootstrap.py \
         --nr_bootstraps {params.nr_bootstraps} \
         --chunk_size {params.chunk_size} \
         --chunks_per_chromosome 10 \
         --nr_chromosomes {params.nr_chr} \
         models/smc_split_bootstrap_input/{params.pop_pair}_12.{params.distind1}_rep \
-        {params.input_dir}"
+        {params.input_dir}
+        """
 
 rule joint_bootstrap_vcf2smc21:
     input:
@@ -93,14 +122,20 @@ rule joint_bootstrap_vcf2smc21:
         nr_chr = 9,
         input_dir = "models/smc_split_input/{pop_pair}_21.{distinguished_ind1}*"
     shell:
-        "python3 scripts/smc_bootstrap.py \
+        """
+        python3 scripts/smc_bootstrap.py \
         --nr_bootstraps {params.nr_bootstraps} \
         --chunk_size {params.chunk_size} \
         --chunks_per_chromosome 10 \
         --nr_chromosomes {params.nr_chr} \
         models/smc_split_bootstrap_input/{params.pop_pair}_21.{params.distind1}_rep \
-        {params.input_dir}"
+        {params.input_dir}
+        """
 
+################################################################################
+# STEP 4
+# Estimate a joint demography for two populations using bootstrapped samples 
+################################################################################
 rule smc_split_bootstrap:
     input:
         smc_split_bootstrap_input
@@ -116,13 +151,20 @@ rule smc_split_bootstrap:
         -o {params.model_out_dir} \
         {input}"
 
+################################################################################
+# STEP 5
+# Plot results for divergence time estimates 
+#   --csv exports a csv formatted file with results
+#   -g specifies the number of years per generation
+################################################################################
+
 rule plot_split:
     input:
         smc_split = expand("models/smc_split/{pop_pair}/model.final.json", pop_pair = pop_pair_dict.keys()),
         smc_split_bootstrap = expand("models/smc_split_bootstrap/{pop_pair}_{n_bootstrap}/model.final.json", pop_pair = pop_pair_dict.keys(), n_bootstrap = range(1,11))
     output:
-        split = "reports/carrot_all_pops_smc_split.png",
-        bootstrap = "reports/carrot_all_pops_smc_split_bootstrap.png"
+        split = "results/carrot_all_pops_smc_split.png",
+        bootstrap = "results/carrot_all_pops_smc_split_bootstrap.png"
     params:
         gen = config['gen']
     singularity:
