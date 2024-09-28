@@ -1,6 +1,6 @@
 # Carrot demography
 
-This repo is a snakemake workflow to run demographic analysis using the SMC++ software for carrot.
+This repo contains a snakemake workflow to estimate the demographic history of carrot populations with the SMC++ software.
 
 Reference: Coe, K., Bostan, H., Rolling, W. et al. Population genomics identifies genetic signatures of carrot domestication and improvement and uncovers the origin of high-carotenoid orange carrots. Nat. Plants 9, 1643–1658 (2023). https://doi.org/10.1038/s41477-023-01526-6
 
